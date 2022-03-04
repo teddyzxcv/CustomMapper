@@ -1,9 +1,8 @@
-package implementation;
+package implementation.testclass;
 
 import ru.hse.homework4.Exported;
 
 import java.util.List;
-import java.util.Set;
 
 @Exported
 public class BookingForm {

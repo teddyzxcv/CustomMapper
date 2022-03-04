@@ -1,21 +1,23 @@
 package implementation;
 
-import ru.hse.homework4.Exported;
-import ru.hse.homework4.Ignored;
 import ru.hse.homework4.Mapper;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class CustomMapper implements Mapper {
+    private final boolean retainIdentity;
+
+    public CustomMapper() {
+        retainIdentity = false;
+    }
+
+    public CustomMapper(boolean rid) {
+        retainIdentity = rid;
+    }
+
     /**
      * Читает сохранённый экземпляр класса {@code clazz} из строки {@code input} * и возвращает восстановленный экземпляр класса {@code clazz}.
      * <p>
@@ -31,12 +33,12 @@ public class CustomMapper implements Mapper {
      *
      * @param clazz класс, сохранённый экземпляр которого находится в {@code input} * @param input строковое представление сохранённого экземпляра класса {@code
      *              clazz}
-     * @param input
+     * @param input Input string.
      * @return восстановленный экземпляр {@code clazz}
      */
     @Override
     public <T> T readFromString(Class<T> clazz, String input) {
-        return CustomDeserializer.stringToObject(clazz, input);
+        return CustomDeserializer.stringToObject(clazz, input, retainIdentity);
     }
 
     /**
@@ -65,7 +67,11 @@ public class CustomMapper implements Mapper {
      */
     @Override
     public <T> T read(Class<T> clazz, InputStream inputStream) throws IOException {
-        return null;
+        StringBuilder inputBuilder = new StringBuilder();
+        for (int charactor; (charactor = inputStream.read()) != -1; ) {
+            inputBuilder.append((char) charactor);
+        }
+        return readFromString(clazz, inputBuilder.toString());
     }
 
     /**
@@ -90,7 +96,8 @@ public class CustomMapper implements Mapper {
      */
     @Override
     public <T> T read(Class<T> clazz, File file) throws IOException {
-        return null;
+        InputStream stream = new FileInputStream(file);
+        return read(clazz, stream);
     }
 
     /**
@@ -111,7 +118,7 @@ public class CustomMapper implements Mapper {
      */
     @Override
     public String writeToString(Object object) {
-        return CustomSerializer.objectToString(object);
+        return CustomSerializer.objectToString(object, retainIdentity);
     }
 
     /**
@@ -131,12 +138,13 @@ public class CustomMapper implements Mapper {
      * mapper.write(reviewComment, new FileOutputStream("/tmp/review")); * </pre>
      *
      * @param object       объект для сохранения
-     * @param outputStream
+     * @param outputStream Output file stream
      * @throws IOException в случае ошибки ввода-вывода
      */
     @Override
     public void write(Object object, OutputStream outputStream) throws IOException {
-
+        String serialized = writeToString(object);
+        outputStream.write(serialized.getBytes(Charset.forName("UTF-8")));
     }
 
     /**
@@ -158,11 +166,12 @@ public class CustomMapper implements Mapper {
      * mapper.write(reviewComment, new File("/tmp/review")); * </pre>
      *
      * @param object объект для сохранения
-     * @param file
+     * @param file   Write to file.
      * @throws IOException в случае ошибки ввода-вывода
      */
     @Override
     public void write(Object object, File file) throws IOException {
-
+        OutputStream stream = new FileOutputStream(file);
+        write(object, stream);
     }
 }

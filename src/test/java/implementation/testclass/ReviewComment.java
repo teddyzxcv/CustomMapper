@@ -1,4 +1,4 @@
-package implementation;
+package implementation.testclass;
 
 import ru.hse.homework4.Exported;
 import ru.hse.homework4.Ignored;
